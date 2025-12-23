@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>福州大学校园管理系统 - 校园地图</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+* {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+      :root {
+        --primary-color: #1a6bc4;
+        --secondary-color: #0d4e8c;
+        --accent-color: #1a6bc4;
+        --light-color: #f0f2f5;
+        --dark-color: #333;
+        --sidebar-width: 250px;
+        --sidebar-collapsed-width: 70px;
+        --header-height: 70px;
+      }
+      body {
+        background: #f0f2f5;
+        color: #333;
+        min-height: 100vh;
+        line-height: 1.6;
+      }
+      .container {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* 侧边栏 */
+      .sidebar {
+        width: var(--sidebar-width);
+        background: linear-gradient(
+          to bottom,
+          var(--secondary-color) 0%,
+          var(--primary-color) 100%
+        );
+        color: #fff;
+        transition: all 0.3s;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+        position: fixed;
+        height: 100vh;
+        overflow-y: auto;
+      }
+      .sidebar.collapsed {
+        width: var(--sidebar-collapsed-width);
+      }
+      .sidebar-header {
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        height: var(--header-height);
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+      }
+      .logo i {
+        font-size: 1.5rem;
+        margin-right: 10px;
+      }
+      .logo h1 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .sidebar.collapsed .logo h1 {
+        display: none;
+      }
+      .toggle-btn {
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+      .sidebar.collapsed .toggle-btn {
+        transform: rotate(180deg);
+      }
+      .sidebar-menu {
+        padding: 20px 0;
+      }
+      .menu-item {
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        color: rgba(255, 255, 255, 0.85);
+        text-decoration: none;
+        transition: 0.2s;
+        border-left: 3px solid transparent;
+        cursor: pointer;
+      }
+      .menu-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        border-left-color: var(--accent-color);
+      }
+      .menu-item.active {
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+        border-left-color: #fff;
+      }
+      .menu-item i {
+        margin-right: 15px;
+        font-size: 1.1rem;
+        width: 20px;
+        text-align: center;
+      }
+      .sidebar.collapsed .menu-item span {
+        display: none;
+      }
+      .menu-divider {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.1);
+        margin: 15px 0;
+      }
+
+      /* 主内容 */
+      .main-content {
+        flex: 1;
+        margin-left: var(--sidebar-width);
+        transition: margin-left 0.3s;
+      }
+      .sidebar.collapsed ~ .main-content {
+        margin-left: var(--sidebar-collapsed-width);
+      }
+      .header {
+        height: var(--header-height);
+        background: #fff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 30px;
+        position: sticky;
+        top: 0;
+        z-index: 99;
+      }
+      .mobile-menu-btn {
+        display: none;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: var(--dark-color);
+        cursor: pointer;
+      }
+      .user-info {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+      }
+      .user-info:hover {
+        filter: brightness(0.95);
+      }
+      .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(
+          to bottom,
+          var(--secondary-color) 0%,
+          var(--primary-color) 100%
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 700;
+        margin-right: 10px;
+      }
+      .page-content {
+        padding: 30px;
+      }
+      .welcome-section {
+        background: linear-gradient(
+          to right,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+        color: #fff;
+        padding: 30px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .welcome-section h1 {
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+      }
+      .welcome-section p {
+        opacity: 0.95;
+        font-size: 1.08rem;
+      }
+
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
+      }
+      .dashboard-card {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 25px;
+        transition: 0.3s;
+        cursor: pointer;
+      }
+      .dashboard-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
+      }
+      .card-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+      .card-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        background: linear-gradient(
+          to right,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 1.5rem;
+        margin-right: 15px;
+      }
+      .card-header h3 {
+        color: var(--dark-color);
+        font-size: 1.2rem;
+      }
+      .card-content p {
+        color: #666;
+      }
+
+      .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+      }
+      .action-btn {
+        background: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+      .action-btn:hover {
+        background: var(--primary-color);
+        color: #fff;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(26, 107, 196, 0.3);
+      }
+      .action-btn i {
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+      }
+
+      .footer {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+        font-size: 0.9rem;
+        border-top: 1px solid #eee;
+        margin-top: 30px;
+      }
+
+      .function-page {
+        display: none;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        padding: 30px;
+        margin-bottom: 30px;
+      }
+      .function-page.active {
+        display: block;
+        animation: fadeIn 0.5s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .page-title {
+        font-size: 1.8rem;
+        color: var(--dark-color);
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid var(--light-color);
+      }
+      .placeholder-content {
+        text-align: center;
+        padding: 60px 20px;
+        color: #888;
+      }
+      .placeholder-content i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        color: #dfe5ee;
+      }
+      .placeholder-content h3 {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+      }
+      .back-btn {
+        background: var(--primary-color);
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: 0.3s;
+        margin-top: 20px;
+      }
+      .back-btn:hover {
+        background: var(--secondary-color);
+      }
+
+      /* 宿舍报修 */
+      .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 20px 0 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      .repair-section {
+        background: #fff;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+      .repair-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .add-repair-btn {
+        background: var(--primary-color);
+        color: #fff;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: 0.3s;
+      }
+      .add-repair-btn:hover {
+        background: var(--secondary-color);
+      }
+      .repair-list {
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .repair-item {
+        padding: 15px;
+        border-bottom: 1px solid #e0e0e0;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .repair-item:hover {
+        background: #f9f9f9;
+      }
+      .repair-item:last-child {
+        border-bottom: none;
+      }
+      .repair-type {
+        font-weight: 700;
+        margin-bottom: 6px;
+        color: var(--primary-color);
+      }
+      .repair-status {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 12px;
+        margin-bottom: 8px;
+      }
+      .status-evaluated {
+        background: #e8f5e8;
+        color: #4caf50;
+      }
+      .status-transferred {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .repair-time,
+      .repair-desc {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 5px;
+      }
+      .no-records {
+        text-align: center;
+        padding: 40px 20px;
+        color: #999;
+      }
+
+      .form-page,
+      .detail-page {
+        display: none;
+        background: #fff;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .form-header,
+      .detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      .form-back-btn {
+        background: none;
+        border: none;
+        color: var(--primary-color);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        font-size: 16px;
+      }
+      .form-back-btn i {
+        margin-right: 6px;
+      }
+      .form-group {
+        margin-bottom: 18px;
+      }
+      .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .required::after {
+        content: "*";
+        color: #f00;
+        margin-left: 4px;
+      }
+      .form-input,
+      .form-select,
+      .form-textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+      .form-textarea {
+        height: 100px;
+        resize: vertical;
+      }
+      .char-count {
+        text-align: right;
+        font-size: 12px;
+        color: #999;
+        margin-top: 5px;
+      }
+      .image-upload {
+        border: 1px dashed #ddd;
+        border-radius: 6px;
+        padding: 20px;
+        text-align: center;
+        color: #999;
+        cursor: pointer;
+      }
+      .image-upload-icon {
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+      .submit-btn {
+        background: var(--primary-color);
+        color: #fff;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: pointer;
+        width: 100%;
+        transition: 0.3s;
+      }
+      .submit-btn:hover {
+        background: var(--secondary-color);
+      }
+
+      /* 报修详情 + 评价 */
+      .detail-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      .detail-item {
+        background: #fafafa;
+        border: 1px solid #eee;
+        border-radius: 6px;
+        padding: 12px;
+      }
+      .detail-label {
+        font-size: 12px;
+        color: #777;
+        margin-bottom: 5px;
+      }
+      .detail-value {
+        font-weight: 600;
+        color: #222;
+      }
+      .evaluation-section {
+        margin-top: 14px;
+        border-top: 1px dashed #e0e0e0;
+        padding-top: 12px;
+      }
+      .evaluation-textarea {
+        width: 100%;
+        min-height: 90px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 10px;
+        resize: vertical;
+        margin: 10px 0;
+      }
+      .submit-evaluation {
+        background: #1db954;
+        color: #fff;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .submit-evaluation:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      @media (max-width: 992px) {
+        .sidebar {
+          width: var(--sidebar-collapsed-width);
+        }
+        .sidebar .logo h1,
+        .sidebar .menu-item span {
+          display: none;
+        }
+        .main-content {
+          margin-left: var(--sidebar-collapsed-width);
+        }
+        .dashboard-grid {
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        }
+      }
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-100%);
+        }
+        .sidebar.active {
+          transform: translateX(0);
+          width: var(--sidebar-width);
+        }
+        .sidebar.active .logo h1,
+        .sidebar.active .menu-item span {
+          display: block;
+        }
+        .main-content {
+          margin-left: 0;
+        }
+        .mobile-menu-btn {
+          display: block;
+        }
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+        }
+        .repair-header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .add-repair-btn {
+          margin-top: 10px;
+        }
+        .detail-content {
+          grid-template-columns: 1fr;
+        }
+      }
+
+/* Map page fixes */
+#campus-map { padding: 20px; }
+#map-container { display: grid; grid-template-columns: 320px 1fr; gap: 16px; }
+#campus-map { height: auto; }
+#campus-map #campus-map { width: 100%; height: 560px; border-radius: 12px; overflow: hidden; }
+@media (max-width: 900px){
+  #map-container { grid-template-columns: 1fr; }
+  #campus-map #campus-map { height: 520px; }
+}
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <div class="logo">
+            <i class="fas fa-graduation-cap"></i>
+            <h1>福州大学校园管理系统</h1>
+          </div>
+          <button class="toggle-btn" id="toggle-btn" title="收起/展开侧边栏">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+        </div>
+
+        <div class="sidebar-menu">
+          <a class="menu-item" href="/dashboard/"><i class="fas fa-home"></i><span>系统概览</span></a>
+          <a class="menu-item" href="/face/"><i class="fas fa-user-check"></i><span>人脸识别</span></a>
+          <a class="menu-item active" href="/campus-map/"><i class="fas fa-map-marked-alt"></i><span>校园地图</span></a>
+          <a class="menu-item" href="/repair/"><i class="fas fa-tools"></i><span>宿舍报修</span></a>
+          <a class="menu-item" href="/student-id/"><i class="fas fa-id-card"></i><span>学生证展示</span></a>
+          <a class="menu-item" href="/love/"><i class="fas fa-heart"></i><span>宿舍表白墙</span></a>
+          <a class="menu-item" href="/profile/"><i class="fas fa-user"></i><span>个人中心</span></a>
+          <div class="menu-divider"></div>
+          <a class="menu-item" href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>退出登录</span></a>
+        </div>
+      </div>
+      <div class="main-content">
+        <div class="header">
+          <button class="mobile-menu-btn" id="mobile-menu-btn">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="user-info" id="user-info" title="点击查看个人中心">
+            <div class="user-avatar" id="user-avatar">学</div>
+            <div>
+              <div id="user-name">同学</div>
+              <div id="user-college" style="font-size: 0.8rem; color: #666">学院</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="page-content">
+          <div class="function-page active" id="campus-map">
+        <h2 class="page-title">校园地图</h2>
+        <div id="map-container">
+            <div class="building-list">
+                <h3>建筑物列表</h3>
+                <ul id="building-items">
+                    <!-- 建筑物列表将通过 JavaScript 动态生成 -->
+                </ul>
+            </div>
+            <div id="campus-map"></div>
+        </div>
+        <button class="back-btn">返回主页</button>
+    </div>
+        </div>
+
+        <div class="footer">福州大学校园管理系统 © 2025</div>
+      </div>
+    </div>
+    <script>
+  /* ======= 基础工具 & 登录守卫（同源，不写死端口） ======= */
+  const ORIGIN = location.origin;
+  const AUTH_API = `${ORIGIN}/api/auth`;
+  const token = localStorage.getItem("token");
+
+  function go(path) {
+    location.href = path.startsWith("http") ? path : `${ORIGIN}${path}`;
+  }
+
+  // 允许 login 页不拦截；其余页无 token 直接回到登录
+  if (!token && !location.pathname.startsWith("/login")) {
+    alert("请先登录！");
+    location.replace(`${ORIGIN}/login/`);
+  }
+
+  async function loadProfile() {
+    // 先用缓存渲染（更快）
+    try {
+      const cached = JSON.parse(localStorage.getItem("user") || "null");
+      if (cached) renderUser(cached);
+    } catch {}
+
+    // 再从后端刷新（更准）
+    try {
+      const res = await fetch(`${AUTH_API}/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("profile not ok");
+      const j = await res.json();
+      const u = j?.data || j?.user || j;
+      if (u) {
+        localStorage.setItem("user", JSON.stringify(u));
+        renderUser(u);
+      }
+    } catch (e) {
+      // 没取到就保持缓存/默认
+    }
+  }
+
+  function renderUser(u) {
+    const name = u.real_name || u.name || u.username || "同学";
+    const college = u.college || u.department || "学院";
+    const avatarChar = name?.trim()?.[0] || "学";
+    const nameEl = document.getElementById("user-name");
+    const colEl = document.getElementById("user-college");
+    const avEl = document.getElementById("user-avatar");
+    if (nameEl) nameEl.textContent = name;
+    if (colEl) colEl.textContent = college;
+    if (avEl) avEl.textContent = avatarChar;
+  }
+
+  // 顶部个人资料卡
+  document.addEventListener("DOMContentLoaded", () => {
+    const userInfo = document.getElementById("user-info");
+    if (userInfo) userInfo.addEventListener("click", () => go("/profile/"));
+
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        go("/login/");
+      });
+    }
+
+    // 侧边栏收起/展开
+    const toggleBtn = document.getElementById("toggle-btn");
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", () => {
+        document.getElementById("sidebar")?.classList.toggle("collapsed");
+      });
+    }
+
+    // 移动端展开/收起
+    const mobileBtn = document.getElementById("mobile-menu-btn");
+    if (mobileBtn) {
+      mobileBtn.addEventListener("click", () => {
+        document.getElementById("sidebar")?.classList.toggle("active");
+      });
+    }
+
+    // 点击主内容区域（小屏收起侧边栏）
+    document.querySelector(".main-content")?.addEventListener("click", () => {
+      if (innerWidth <= 768) document.getElementById("sidebar")?.classList.remove("active");
+    });
+
+    // 通用返回按钮
+    document.querySelectorAll(".back-btn").forEach((btn) => {
+      btn.addEventListener("click", () => go("/dashboard/"));
+    });
+
+    loadProfile();
+  });
+</script>
+    <script>
+function initCampusMap() {
+        // 检查地图是否已初始化
+        if (window.campusMapInstance) {
+            return;
+        }
+        
+        // 初始化地图
+        const map = L.map('campus-map', {
+            crs: L.CRS.Simple,
+            minZoom: -1,
+            maxZoom: 3
+        });
+        
+        // 存储地图实例
+        window.campusMapInstance = map;
+        
+        // 设置地图图片和大小
+        const campusImage = L.imageOverlay('https://hjz.fzu.edu.cn/__local/6/1B/23/2C1EF6D316C1E7A9E24943CD255_7C3A022B_29C5E2.jpg', [ [0, 0], [1000, 800] ]).addTo(map);
+        
+        // 设置地图视图
+        map.setView([500,400], 0);
+        
+        // 定义校园建筑物标记点
+        const buildings = [
+            { name: '图书馆', latlng: [0, 0], desc: '学校图书馆，藏书丰富，学习氛围浓厚。' },
+            { name: '教学楼', latlng: [350, 450], desc: '主要教学区域，设有多个教室和实验室。' },
+            { name: '学生宿舍', latlng: [550, 420], desc: '学生住宿区域，提供舒适的生活环境。' },
+            { name: '食堂', latlng: [480, 480], desc: '校园餐厅，提供各类美食。' },
+            { name: '体育馆', latlng: [300, 300], desc: '体育活动中心，设有篮球场、羽毛球场等设施。' },
+            { name: '行政楼', latlng: [400, 300], desc: '学校行政办公区域。' },
+            { name: '实验楼', latlng: [500, 380], desc: '科学实验和研究的主要场所。' },
+            { name: '校门', latlng: [380, 600], desc: '学校主入口。' }
+        ];
+        
+        // 存储所有标记点的引用
+        const markers = [];
+        
+        // 创建建筑物列表
+        const buildingList = document.getElementById('building-items');
+        // 清空现有列表项
+        buildingList.innerHTML = '';
+        
+        // 添加标记点到地图并创建列表项
+        buildings.forEach((building, index) => {
+            // 创建自定义图标
+            const customIcon = L.divIcon({
+                className: 'custom-icon',
+                html: `<div style="background-color: #3498db; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold;">${index + 1}</div>`,
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+            });
+            
+            // 创建标记点
+            const marker = L.marker(building.latlng, { icon: customIcon }).addTo(map);
+            
+            // 绑定弹窗信息
+            marker.bindPopup(`
+                <h3>${building.name}</h3>
+                <p>${building.desc}</p>
+            `);
+            
+            // 存储标记点引用
+            markers.push(marker);
+            
+            // 创建列表项
+            const listItem = document.createElement('li');
+            listItem.textContent = `${index + 1}. ${building.name}`;
+            listItem.addEventListener('click', () => {
+                // 点击列表项时，地图中心移动到对应标记点并打开弹窗
+                map.setView(building.latlng, 1);
+                marker.openPopup();
+            });
+            buildingList.appendChild(listItem);
+        });
+        
+        // 添加地图控件
+        L.control.zoom({
+            position: 'bottomright'
+        }).addTo(map);
+        
+        // 地图双击放大
+        map.on('dblclick', (e) => {
+            map.zoomIn();
+        });
+        
+        // 添加地图缩放和平移动画
+        map.on('movestart', () => {
+            map._container.style.cursor = 'grabbing';
+        });
+        
+        map.on('moveend', () => {
+            map._container.style.cursor = 'grab';
+        });
+        
+        map._container.style.cursor = 'grab';
+    }
+
+document.addEventListener("DOMContentLoaded", () => {
+  // 进入本页直接初始化地图
+  try { initCampusMap(); } catch (e) { console.warn(e); }
+});
+</script>
+  </body>
+</html>

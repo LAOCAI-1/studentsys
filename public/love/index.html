@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>福州大学校园管理系统 - 宿舍表白墙</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    
+    <style>
+* {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+      :root {
+        --primary-color: #1a6bc4;
+        --secondary-color: #0d4e8c;
+        --accent-color: #1a6bc4;
+        --light-color: #f0f2f5;
+        --dark-color: #333;
+        --sidebar-width: 250px;
+        --sidebar-collapsed-width: 70px;
+        --header-height: 70px;
+      }
+      body {
+        background: #f0f2f5;
+        color: #333;
+        min-height: 100vh;
+        line-height: 1.6;
+      }
+      .container {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* 侧边栏 */
+      .sidebar {
+        width: var(--sidebar-width);
+        background: linear-gradient(
+          to bottom,
+          var(--secondary-color) 0%,
+          var(--primary-color) 100%
+        );
+        color: #fff;
+        transition: all 0.3s;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+        position: fixed;
+        height: 100vh;
+        overflow-y: auto;
+      }
+      .sidebar.collapsed {
+        width: var(--sidebar-collapsed-width);
+      }
+      .sidebar-header {
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        height: var(--header-height);
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+      }
+      .logo i {
+        font-size: 1.5rem;
+        margin-right: 10px;
+      }
+      .logo h1 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .sidebar.collapsed .logo h1 {
+        display: none;
+      }
+      .toggle-btn {
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+      .sidebar.collapsed .toggle-btn {
+        transform: rotate(180deg);
+      }
+      .sidebar-menu {
+        padding: 20px 0;
+      }
+      .menu-item {
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        color: rgba(255, 255, 255, 0.85);
+        text-decoration: none;
+        transition: 0.2s;
+        border-left: 3px solid transparent;
+        cursor: pointer;
+      }
+      .menu-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        border-left-color: var(--accent-color);
+      }
+      .menu-item.active {
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+        border-left-color: #fff;
+      }
+      .menu-item i {
+        margin-right: 15px;
+        font-size: 1.1rem;
+        width: 20px;
+        text-align: center;
+      }
+      .sidebar.collapsed .menu-item span {
+        display: none;
+      }
+      .menu-divider {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.1);
+        margin: 15px 0;
+      }
+
+      /* 主内容 */
+      .main-content {
+        flex: 1;
+        margin-left: var(--sidebar-width);
+        transition: margin-left 0.3s;
+      }
+      .sidebar.collapsed ~ .main-content {
+        margin-left: var(--sidebar-collapsed-width);
+      }
+      .header {
+        height: var(--header-height);
+        background: #fff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 30px;
+        position: sticky;
+        top: 0;
+        z-index: 99;
+      }
+      .mobile-menu-btn {
+        display: none;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: var(--dark-color);
+        cursor: pointer;
+      }
+      .user-info {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+      }
+      .user-info:hover {
+        filter: brightness(0.95);
+      }
+      .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(
+          to bottom,
+          var(--secondary-color) 0%,
+          var(--primary-color) 100%
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 700;
+        margin-right: 10px;
+      }
+      .page-content {
+        padding: 30px;
+      }
+      .welcome-section {
+        background: linear-gradient(
+          to right,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+        color: #fff;
+        padding: 30px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .welcome-section h1 {
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+      }
+      .welcome-section p {
+        opacity: 0.95;
+        font-size: 1.08rem;
+      }
+
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
+      }
+      .dashboard-card {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 25px;
+        transition: 0.3s;
+        cursor: pointer;
+      }
+      .dashboard-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
+      }
+      .card-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+      .card-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        background: linear-gradient(
+          to right,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 1.5rem;
+        margin-right: 15px;
+      }
+      .card-header h3 {
+        color: var(--dark-color);
+        font-size: 1.2rem;
+      }
+      .card-content p {
+        color: #666;
+      }
+
+      .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+      }
+      .action-btn {
+        background: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+      .action-btn:hover {
+        background: var(--primary-color);
+        color: #fff;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(26, 107, 196, 0.3);
+      }
+      .action-btn i {
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+      }
+
+      .footer {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+        font-size: 0.9rem;
+        border-top: 1px solid #eee;
+        margin-top: 30px;
+      }
+
+      .function-page {
+        display: none;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        padding: 30px;
+        margin-bottom: 30px;
+      }
+      .function-page.active {
+        display: block;
+        animation: fadeIn 0.5s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .page-title {
+        font-size: 1.8rem;
+        color: var(--dark-color);
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid var(--light-color);
+      }
+      .placeholder-content {
+        text-align: center;
+        padding: 60px 20px;
+        color: #888;
+      }
+      .placeholder-content i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        color: #dfe5ee;
+      }
+      .placeholder-content h3 {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+      }
+      .back-btn {
+        background: var(--primary-color);
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: 0.3s;
+        margin-top: 20px;
+      }
+      .back-btn:hover {
+        background: var(--secondary-color);
+      }
+
+      /* 宿舍报修 */
+      .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 20px 0 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      .repair-section {
+        background: #fff;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+      .repair-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .add-repair-btn {
+        background: var(--primary-color);
+        color: #fff;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: 0.3s;
+      }
+      .add-repair-btn:hover {
+        background: var(--secondary-color);
+      }
+      .repair-list {
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .repair-item {
+        padding: 15px;
+        border-bottom: 1px solid #e0e0e0;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .repair-item:hover {
+        background: #f9f9f9;
+      }
+      .repair-item:last-child {
+        border-bottom: none;
+      }
+      .repair-type {
+        font-weight: 700;
+        margin-bottom: 6px;
+        color: var(--primary-color);
+      }
+      .repair-status {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 12px;
+        margin-bottom: 8px;
+      }
+      .status-evaluated {
+        background: #e8f5e8;
+        color: #4caf50;
+      }
+      .status-transferred {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .repair-time,
+      .repair-desc {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 5px;
+      }
+      .no-records {
+        text-align: center;
+        padding: 40px 20px;
+        color: #999;
+      }
+
+      .form-page,
+      .detail-page {
+        display: none;
+        background: #fff;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .form-header,
+      .detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      .form-back-btn {
+        background: none;
+        border: none;
+        color: var(--primary-color);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        font-size: 16px;
+      }
+      .form-back-btn i {
+        margin-right: 6px;
+      }
+      .form-group {
+        margin-bottom: 18px;
+      }
+      .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .required::after {
+        content: "*";
+        color: #f00;
+        margin-left: 4px;
+      }
+      .form-input,
+      .form-select,
+      .form-textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+      .form-textarea {
+        height: 100px;
+        resize: vertical;
+      }
+      .char-count {
+        text-align: right;
+        font-size: 12px;
+        color: #999;
+        margin-top: 5px;
+      }
+      .image-upload {
+        border: 1px dashed #ddd;
+        border-radius: 6px;
+        padding: 20px;
+        text-align: center;
+        color: #999;
+        cursor: pointer;
+      }
+      .image-upload-icon {
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+      .submit-btn {
+        background: var(--primary-color);
+        color: #fff;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: pointer;
+        width: 100%;
+        transition: 0.3s;
+      }
+      .submit-btn:hover {
+        background: var(--secondary-color);
+      }
+
+      /* 报修详情 + 评价 */
+      .detail-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      .detail-item {
+        background: #fafafa;
+        border: 1px solid #eee;
+        border-radius: 6px;
+        padding: 12px;
+      }
+      .detail-label {
+        font-size: 12px;
+        color: #777;
+        margin-bottom: 5px;
+      }
+      .detail-value {
+        font-weight: 600;
+        color: #222;
+      }
+      .evaluation-section {
+        margin-top: 14px;
+        border-top: 1px dashed #e0e0e0;
+        padding-top: 12px;
+      }
+      .evaluation-textarea {
+        width: 100%;
+        min-height: 90px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 10px;
+        resize: vertical;
+        margin: 10px 0;
+      }
+      .submit-evaluation {
+        background: #1db954;
+        color: #fff;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .submit-evaluation:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      @media (max-width: 992px) {
+        .sidebar {
+          width: var(--sidebar-collapsed-width);
+        }
+        .sidebar .logo h1,
+        .sidebar .menu-item span {
+          display: none;
+        }
+        .main-content {
+          margin-left: var(--sidebar-collapsed-width);
+        }
+        .dashboard-grid {
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        }
+      }
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-100%);
+        }
+        .sidebar.active {
+          transform: translateX(0);
+          width: var(--sidebar-width);
+        }
+        .sidebar.active .logo h1,
+        .sidebar.active .menu-item span {
+          display: block;
+        }
+        .main-content {
+          margin-left: 0;
+        }
+        .mobile-menu-btn {
+          display: block;
+        }
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+        }
+        .repair-header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .add-repair-btn {
+          margin-top: 10px;
+        }
+        .detail-content {
+          grid-template-columns: 1fr;
+        }
+      }
+
+#dorm-wall { padding: 20px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <div class="logo">
+            <i class="fas fa-graduation-cap"></i>
+            <h1>福州大学校园管理系统</h1>
+          </div>
+          <button class="toggle-btn" id="toggle-btn" title="收起/展开侧边栏">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+        </div>
+
+        <div class="sidebar-menu">
+          <a class="menu-item" href="/dashboard/"><i class="fas fa-home"></i><span>系统概览</span></a>
+          <a class="menu-item" href="/face/"><i class="fas fa-user-check"></i><span>人脸识别</span></a>
+          <a class="menu-item" href="/campus-map/"><i class="fas fa-map-marked-alt"></i><span>校园地图</span></a>
+          <a class="menu-item" href="/repair/"><i class="fas fa-tools"></i><span>宿舍报修</span></a>
+          <a class="menu-item" href="/student-id/"><i class="fas fa-id-card"></i><span>学生证展示</span></a>
+          <a class="menu-item active" href="/love/"><i class="fas fa-heart"></i><span>宿舍表白墙</span></a>
+          <a class="menu-item" href="/profile/"><i class="fas fa-user"></i><span>个人中心</span></a>
+          <div class="menu-divider"></div>
+          <a class="menu-item" href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>退出登录</span></a>
+        </div>
+      </div>
+      <div class="main-content">
+        <div class="header">
+          <button class="mobile-menu-btn" id="mobile-menu-btn">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="user-info" id="user-info" title="点击查看个人中心">
+            <div class="user-avatar" id="user-avatar">学</div>
+            <div>
+              <div id="user-name">同学</div>
+              <div id="user-college" style="font-size: 0.8rem; color: #666">学院</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="page-content">
+          <div class="function-page active" id="dorm-wall">
+        <h2 class="page-title">宿舍表白墙</h2>
+        <p>在这里，你可以向心仪的TA表达心意，分享美好时刻。支持匿名发布和回复。</p>
+
+        <!-- 发帖表单 -->
+        <div class="confession-form">
+            <h3 class="section-title">发表表白</h3>
+            <div class="form-group">
+                <label for="post-content">表白内容</label>
+                <textarea id="post-content" class="form-control" rows="4" placeholder="写下你想说的话..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>表情</label>
+                <div class="emoji-picker" id="emoji-picker">
+                    <span class="emoji">😊</span>
+                    <span class="emoji">❤️</span>
+                    <span class="emoji">😂</span>
+                    <span class="emoji">😍</span>
+                    <span class="emoji">👍</span>
+                    <span class="emoji">🙏</span>
+                    <span class="emoji">😘</span>
+                    <span class="emoji">😭</span>
+                    <span class="emoji">🥰</span>
+                    <span class="emoji">😎</span>
+                    <span class="emoji">🤔</span>
+                    <span class="emoji">😇</span>
+                    <span class="emoji">🤗</span>
+                    <span class="emoji">😋</span>
+                    <span class="emoji">🤩</span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="post-image">上传图片</label>
+                <input type="file" id="post-image" accept="image/*" class="form-control">
+            </div>
+            
+            <div class="form-group checkbox-group">
+                <input type="checkbox" id="anonymous-post">
+                <label for="anonymous-post">匿名发布</label>
+            </div>
+            
+            <button class="btn" id="submit-post">发布表白</button>
+        </div>
+
+        <!-- 帖子列表 -->
+        <div class="posts-container" id="posts-container">
+            <h3 class="section-title">最新表白</h3>
+            <!-- 帖子将通过JavaScript动态生成 -->
+        </div>
+    </div>
+        </div>
+
+        <div class="footer">福州大学校园管理系统 © 2025</div>
+      </div>
+    </div>
+    <script>
+  /* ======= 基础工具 & 登录守卫（同源，不写死端口） ======= */
+  const ORIGIN = location.origin;
+  const AUTH_API = `${ORIGIN}/api/auth`;
+  const token = localStorage.getItem("token");
+
+  function go(path) {
+    location.href = path.startsWith("http") ? path : `${ORIGIN}${path}`;
+  }
+
+  // 允许 login 页不拦截；其余页无 token 直接回到登录
+  if (!token && !location.pathname.startsWith("/login")) {
+    alert("请先登录！");
+    location.replace(`${ORIGIN}/login/`);
+  }
+
+  async function loadProfile() {
+    // 先用缓存渲染（更快）
+    try {
+      const cached = JSON.parse(localStorage.getItem("user") || "null");
+      if (cached) renderUser(cached);
+    } catch {}
+
+    // 再从后端刷新（更准）
+    try {
+      const res = await fetch(`${AUTH_API}/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("profile not ok");
+      const j = await res.json();
+      const u = j?.data || j?.user || j;
+      if (u) {
+        localStorage.setItem("user", JSON.stringify(u));
+        renderUser(u);
+      }
+    } catch (e) {
+      // 没取到就保持缓存/默认
+    }
+  }
+
+  function renderUser(u) {
+    const name = u.real_name || u.name || u.username || "同学";
+    const college = u.college || u.department || "学院";
+    const avatarChar = name?.trim()?.[0] || "学";
+    const nameEl = document.getElementById("user-name");
+    const colEl = document.getElementById("user-college");
+    const avEl = document.getElementById("user-avatar");
+    if (nameEl) nameEl.textContent = name;
+    if (colEl) colEl.textContent = college;
+    if (avEl) avEl.textContent = avatarChar;
+  }
+
+  // 顶部个人资料卡
+  document.addEventListener("DOMContentLoaded", () => {
+    const userInfo = document.getElementById("user-info");
+    if (userInfo) userInfo.addEventListener("click", () => go("/profile/"));
+
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        go("/login/");
+      });
+    }
+
+    // 侧边栏收起/展开
+    const toggleBtn = document.getElementById("toggle-btn");
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", () => {
+        document.getElementById("sidebar")?.classList.toggle("collapsed");
+      });
+    }
+
+    // 移动端展开/收起
+    const mobileBtn = document.getElementById("mobile-menu-btn");
+    if (mobileBtn) {
+      mobileBtn.addEventListener("click", () => {
+        document.getElementById("sidebar")?.classList.toggle("active");
+      });
+    }
+
+    // 点击主内容区域（小屏收起侧边栏）
+    document.querySelector(".main-content")?.addEventListener("click", () => {
+      if (innerWidth <= 768) document.getElementById("sidebar")?.classList.remove("active");
+    });
+
+    // 通用返回按钮
+    document.querySelectorAll(".back-btn").forEach((btn) => {
+      btn.addEventListener("click", () => go("/dashboard/"));
+    });
+
+    loadProfile();
+  });
+</script>
+    <script>
+// 模拟数据 - 表白墙帖子
+    let posts = [
+        {
+            id: 1,
+            author: "李四",
+            avatar: "李",
+            content: "今天在图书馆看到一位穿白色连衣裙的女孩，你在看《百年孤独》，不知道有没有机会认识你？",
+            image: "",
+            time: "2023-10-16 18:30",
+            likes: 5,
+            liked: false,
+            anonymous: false,
+            comments: [
+                {
+                    id: 1,
+                    author: "王五",
+                    content: "祝福！希望你能找到她",
+                    time: "2023-10-16 19:15",
+                    anonymous: false
+                }
+            ],
+            hasNewReply: false
+        },
+        {
+            id: 2,
+            author: "匿名",
+            avatar: "匿",
+            content: "想对计算机科学学院的张同学说：你的笑容真的很治愈 ❤️",
+            image: "",
+            time: "2023-10-16 15:45",
+            likes: 12,
+            liked: true,
+            anonymous: true,
+            comments: [
+                {
+                    id: 1,
+                    author: "赵六",
+                    content: "哇！是谁这么幸运？",
+                    time: "2023-10-16 16:20",
+                    anonymous: false
+                },
+                {
+                    id: 2,
+                    author: "匿名",
+                    content: "谢谢你的喜欢 😊",
+                    time: "2023-10-16 17:05",
+                    anonymous: true
+                }
+            ],
+            hasNewReply: true
+        },
+        {
+            id: 3,
+            author: "陈七",
+            avatar: "陈",
+            content: "感谢室友们这段时间的帮助，特别是帮我复习高数的小明，爱你哟 😘",
+            image: "",
+            time: "2023-10-16 12:10",
+            likes: 8,
+            liked: false,
+            anonymous: false,
+            comments: [],
+            hasNewReply: false
+        }
+    ];
+
+    // DOM 元素
+    const postsContainer = document.getElementById('posts-container');
+    const postContent = document.getElementById('post-content');
+    const postImage = document.getElementById('post-image');
+    const anonymousPost = document.getElementById('anonymous-post');
+    const submitPost = document.getElementById('submit-post');
+    const emojiPicker = document.getElementById('emoji-picker');
+
+    // 初始化页面
+    function initPage() {
+        renderPosts();
+        
+        // 添加表情选择功能
+        emojiPicker.addEventListener('click', function(e) {
+            if (e.target.classList.contains('emoji')) {
+                postContent.value += e.target.textContent;
+                postContent.focus();
+            }
+        });
+        
+        // 添加发帖功能
+        submitPost.addEventListener('click', createPost);
+    }
+
+    // 渲染帖子列表
+    function renderPosts() {
+        postsContainer.innerHTML = '<h3 class="section-title">最新表白</h3>';
+        
+        // 只显示最新的20条帖子
+        const displayPosts = posts.slice(0, 20);
+        
+        if (displayPosts.length === 0) {
+            postsContainer.innerHTML += '<p style="text-align: center; padding: 20px; color: #888;">还没有表白，快来发表第一条吧！</p>';
+            return;
+        }
+        
+        displayPosts.forEach(post => {
+            const postElement = createPostElement(post);
+            postsContainer.appendChild(postElement);
+        });
+    }
+
+    // 创建帖子元素
+    function createPostElement(post) {
+        const postDiv = document.createElement('div');
+        postDiv.className = 'post';
+        postDiv.dataset.id = post.id;
+        
+        // 帖子头部
+        const postHeader = document.createElement('div');
+        postHeader.className = 'post-header';
+        
+        const postAuthor = document.createElement('div');
+        postAuthor.className = 'post-author';
+        
+        const avatar = document.createElement('div');
+        avatar.className = 'post-avatar';
+        avatar.textContent = post.avatar;
+        
+        const postInfo = document.createElement('div');
+        postInfo.className = 'post-info';
+        
+        const authorName = document.createElement('h3');
+        authorName.textContent = post.author;
+        
+        const postTime = document.createElement('div');
+        postTime.className = 'post-time';
+        postTime.textContent = post.time;
+        
+        postInfo.appendChild(authorName);
+        postInfo.appendChild(postTime);
+        
+        postAuthor.appendChild(avatar);
+        postAuthor.appendChild(postInfo);
+        
+        if (post.anonymous) {
+            const anonymousBadge = document.createElement('span');
+            anonymousBadge.className = 'anonymous-badge';
+            anonymousBadge.textContent = '匿名';
+            postAuthor.appendChild(anonymousBadge);
+        }
+        
+        postHeader.appendChild(postAuthor);
+        
+        // 帖子内容
+        const postContent = document.createElement('div');
+        postContent.className = 'post-content';
+        postContent.innerHTML = `<p>${post.content}</p>`;
+        
+        if (post.image) {
+            const postImage = document.createElement('img');
+            postImage.className = 'post-image';
+            postImage.src = post.image;
+            postImage.alt = '表白图片';
+            postContent.appendChild(postImage);
+        }
+        
+        // 帖子操作
+        const postActions = document.createElement('div');
+        postActions.className = 'post-actions';
+        
+        const likeBtn = document.createElement('button');
+        likeBtn.className = `action-btn ${post.liked ? 'liked' : ''}`;
+        likeBtn.innerHTML = `<i class="fas fa-heart"></i> ${post.likes}`;
+        likeBtn.addEventListener('click', () => toggleLike(post.id));
+        
+        const commentBtn = document.createElement('button');
+        commentBtn.className = 'action-btn';
+        commentBtn.innerHTML = `<i class="fas fa-comment"></i> ${post.comments.length}`;
+        commentBtn.addEventListener('click', () => toggleComments(post.id));
+        
+        postActions.appendChild(likeBtn);
+        postActions.appendChild(commentBtn);
+        
+        // 评论区域
+        const commentsSection = document.createElement('div');
+        commentsSection.className = 'comments-section';
+        commentsSection.style.display = 'none';
+        
+        // 评论表单
+        const commentForm = document.createElement('div');
+        commentForm.className = 'comment-form';
+        
+        const commentInput = document.createElement('input');
+        commentInput.type = 'text';
+        commentInput.className = 'comment-input';
+        commentInput.placeholder = '写下你的回复...';
+        
+        const anonymousComment = document.createElement('div');
+        anonymousComment.className = 'checkbox-group';
+        anonymousComment.style.marginRight = '10px';
+        
+        const anonymousCheckbox = document.createElement('input');
+        anonymousCheckbox.type = 'checkbox';
+        anonymousCheckbox.id = `anonymous-${post.id}`;
+        
+        const anonymousLabel = document.createElement('label');
+        anonymousLabel.htmlFor = `anonymous-${post.id}`;
+        anonymousLabel.textContent = '匿名';
+        
+        anonymousComment.appendChild(anonymousCheckbox);
+        anonymousComment.appendChild(anonymousLabel);
+        
+        const submitComment = document.createElement('button');
+        submitComment.className = 'btn';
+        submitComment.textContent = '回复';
+        submitComment.addEventListener('click', () => addComment(post.id, commentInput.value, anonymousCheckbox.checked));
+        
+        commentForm.appendChild(commentInput);
+        commentForm.appendChild(anonymousComment);
+        commentForm.appendChild(submitComment);
+        
+        commentsSection.appendChild(commentForm);
+        
+        // 评论列表
+        const commentsList = document.createElement('div');
+        commentsList.className = 'comments-list';
+        
+        post.comments.forEach(comment => {
+            const commentElement = createCommentElement(comment);
+            commentsList.appendChild(commentElement);
+        });
+        
+        commentsSection.appendChild(commentsList);
+        
+        // 组装帖子
+        postDiv.appendChild(postHeader);
+        postDiv.appendChild(postContent);
+        postDiv.appendChild(postActions);
+        postDiv.appendChild(commentsSection);
+        
+        return postDiv;
+    }
+
+    // 创建评论元素
+    function createCommentElement(comment) {
+        const commentDiv = document.createElement('div');
+        commentDiv.className = 'comment';
+        
+        const commentHeader = document.createElement('div');
+        commentHeader.className = 'comment-header';
+        
+        const commentAuthor = document.createElement('div');
+        commentAuthor.className = 'comment-author';
+        commentAuthor.textContent = comment.author;
+        
+        if (comment.anonymous) {
+            const anonymousBadge = document.createElement('span');
+            anonymousBadge.className = 'anonymous-badge';
+            anonymousBadge.textContent = '匿名';
+            commentAuthor.appendChild(anonymousBadge);
+        }
+        
+        const commentTime = document.createElement('div');
+        commentTime.className = 'comment-time';
+        commentTime.textContent = comment.time;
+        
+        commentHeader.appendChild(commentAuthor);
+        commentHeader.appendChild(commentTime);
+        
+        const commentContent = document.createElement('div');
+        commentContent.className = 'comment-content';
+        commentContent.textContent = comment.content;
+        
+        commentDiv.appendChild(commentHeader);
+        commentDiv.appendChild(commentContent);
+        
+        return commentDiv;
+    }
+
+    // 创建新帖子
+    function createPost() {
+        const content = postContent.value.trim();
+        if (!content) {
+            alert('请输入表白内容');
+            return;
+        }
+        
+        const newPost = {
+            id: posts.length > 0 ? Math.max(...posts.map(p => p.id)) + 1 : 1,
+            author: anonymousPost.checked ? '匿名' : '张三',
+            avatar: anonymousPost.checked ? '匿' : '张',
+            content: content,
+            image: '',
+            time: new Date().toLocaleString('zh-CN'),
+            likes: 0,
+            liked: false,
+            anonymous: anonymousPost.checked,
+            comments: [],
+            hasNewReply: false
+        };
+        
+        // 如果有图片，处理图片
+        if (postImage.files.length > 0) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                newPost.image = e.target.result;
+                addPostToDOM(newPost);
+            };
+            reader.readAsDataURL(postImage.files[0]);
+        } else {
+            addPostToDOM(newPost);
+        }
+        
+        // 重置表单
+        postContent.value = '';
+        postImage.value = '';
+        anonymousPost.checked = false;
+    }
+
+    // 将帖子添加到DOM
+    function addPostToDOM(post) {
+        posts.unshift(post);
+        renderPosts();
+    }
+
+    // 点赞/取消点赞
+    function toggleLike(postId) {
+        const post = posts.find(p => p.id === postId);
+        if (post) {
+            if (post.liked) {
+                post.likes--;
+                post.liked = false;
+            } else {
+                post.likes++;
+                post.liked = true;
+            }
+            renderPosts();
+        }
+    }
+
+    // 显示/隐藏评论
+    function toggleComments(postId) {
+        const postElement = document.querySelector(`.post[data-id="${postId}"]`);
+        const commentsSection = postElement.querySelector('.comments-section');
+        
+        if (commentsSection.style.display === 'none') {
+            commentsSection.style.display = 'block';
+            
+            // 清除新回复提示
+            const post = posts.find(p => p.id === postId);
+            if (post && post.hasNewReply) {
+                post.hasNewReply = false;
+                renderPosts();
+            }
+        } else {
+            commentsSection.style.display = 'none';
+        }
+    }
+
+    // 添加评论
+    function addComment(postId, content, anonymous) {
+        content = content.trim();
+        if (!content) {
+            alert('请输入回复内容');
+            return;
+        }
+        
+        const post = posts.find(p => p.id === postId);
+        if (post) {
+            const newComment = {
+                id: post.comments.length > 0 ? Math.max(...post.comments.map(c => c.id)) + 1 : 1,
+                author: anonymous ? '匿名' : '张三',
+                content: content,
+                time: new Date().toLocaleString('zh-CN'),
+                anonymous: anonymous
+            };
+            
+            post.comments.push(newComment);
+            post.hasNewReply = true;
+            renderPosts();
+            
+            // 重新显示评论区域
+            const postElement = document.querySelector(`.post[data-id="${postId}"]`);
+            const commentsSection = postElement.querySelector('.comments-section');
+            commentsSection.style.display = 'block';
+            
+            // 清空评论输入框
+            const commentInput = postElement.querySelector('.comment-input');
+            commentInput.value = '';
+            
+            // 重置匿名复选框
+            const anonymousCheckbox = postElement.querySelector('input[type="checkbox"]');
+            anonymousCheckbox.checked = false;
+        }
+    }
+
+    // 页面切换功能
+    document.querySelectorAll('.menu-item, .dashboard-card, .action-btn').forEach(element => {
+        element.addEventListener('click', function(e) {
+            // 如果是外部链接，直接跳转
+            if (this.getAttribute('href') && this.getAttribute('href').startsWith('http')) {
+                return; // 让浏览器处理外部链接
+            }
+
+            e.preventDefault();
+            const pageId = this.getAttribute('data-page');
+            if (pageId) {
+                // 更新菜单激活状态
+                document.querySelectorAll('.menu-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                const currentItem = document.querySelector(`.menu-item[data-page="${pageId}"]`);
+                if (currentItem) {
+                    currentItem.classList.add('active');
+                }
+
+                // 显示对应页面
+                document.querySelectorAll('.function-page').forEach(page => {
+                    page.classList.remove('active');
+                });
+                const targetPage = document.getElementById(pageId);
+                if (targetPage) {
+                    targetPage.classList.add('active');
+                }
+            }
+        });
+    });
+
+    // 初始化页面
+    document.addEventListener('DOMContentLoaded', initPage);
+</script>
+  </body>
+</html>

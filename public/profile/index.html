@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>学生资料卡</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", "PingFang SC", sans-serif;
+      }
+      body {
+        background: linear-gradient(135deg, #6a11cb, #2575fc);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .card {
+        background: #fff;
+        width: 480px;
+        border-radius: 22px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+        overflow: hidden;
+      }
+      .hd {
+        background: linear-gradient(135deg, #6a11cb, #2575fc);
+        color: #fff;
+        padding: 44px 22px 80px;
+        text-align: center;
+        position: relative;
+      }
+      .back {
+        position: absolute;
+        left: 16px;
+        top: 16px;
+        background: rgba(255, 255, 255, 0.18);
+        border: none;
+        color: #fff;
+        padding: 8px 10px;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      .avatar {
+        width: 108px;
+        height: 108px;
+        border-radius: 50%;
+        border: 5px solid #fff;
+        background: #fff
+          url("https://cdn-icons-png.flaticon.com/512/4333/4333609.png")
+          center/cover no-repeat;
+        position: absolute;
+        left: 50%;
+        top: 108px;
+        transform: translateX(-50%);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+      }
+      .bd {
+        padding: 120px 40px 34px;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 18px;
+        font-size: 1.05rem;
+      }
+      .row i {
+        width: 32px;
+        text-align: center;
+        color: #2575fc;
+        margin-right: 12px;
+        font-size: 1.2rem;
+      }
+      .row input {
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 1.05rem;
+        width: 270px;
+        font-weight: 600;
+      }
+      .readonly {
+        color: #555;
+      }
+      .btn {
+        display: block;
+        width: 86%;
+        margin: 14px auto;
+        padding: 13px;
+        border: none;
+        border-radius: 12px;
+        color: #fff;
+        cursor: pointer;
+        font-weight: 700;
+      }
+      #edit {
+        background: linear-gradient(135deg, #007bff, #4a90e2);
+        box-shadow: 0 5px 14px rgba(0, 123, 255, 0.35);
+      }
+      #save {
+        background: linear-gradient(135deg, #00c853, #43a047);
+        box-shadow: 0 5px 14px rgba(0, 200, 83, 0.35);
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="hd">
+        <button class="back" id="go-back">
+          <i class="fas fa-arrow-left"></i> 返回
+        </button>
+        <h2>学生资料卡</h2>
+        <p style="opacity: 0.9; margin-top: 6px">查看或更新你的基本信息</p>
+      </div>
+      <div class="avatar"></div>
+      <div class="bd">
+        <div class="row">
+          <i class="fas fa-id-card"></i> 学号：<input
+            id="no"
+            class="readonly"
+            readonly
+          />
+        </div>
+        <div class="row">
+          <i class="fas fa-user"></i> 姓名：<input
+            id="name"
+            class="readonly"
+            readonly
+          />
+        </div>
+        <div class="row">
+          <i class="fas fa-school"></i> 学院：<input
+            id="college"
+            class="readonly"
+            readonly
+          />
+        </div>
+        <div class="row">
+          <i class="fas fa-graduation-cap"></i> 专业：<input
+            id="major"
+            class="readonly"
+            readonly
+          />
+        </div>
+        <div class="row">
+          <i class="fas fa-layer-group"></i> 年级：<input
+            id="grade"
+            class="readonly"
+            readonly
+          />
+        </div>
+        <div class="row">
+          <i class="fas fa-building"></i> 宿舍：<input
+            id="dorm"
+            class="readonly"
+            readonly
+          />
+        </div>
+        <button id="edit" class="btn">✏️ 更新资料</button>
+        <button id="save" class="btn">💾 保存</button>
+      </div>
+    </div>
+
+    <script>
+      const ORIGIN = window.location.origin;
+      const API = ORIGIN + "/api/auth";
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("请先登录");
+        location.replace(ORIGIN + "/login/");
+      }
+
+      const $ = (id) => document.getElementById(id);
+      $("go-back").onclick = () => location.replace(ORIGIN + "/dashboard/");
+
+      let user = {};
+      async function loadProfile() {
+        try {
+          const res = await fetch(API + "/profile", {
+            headers: { Authorization: "Bearer " + token },
+          });
+          const j = await res.json();
+          if (res.ok && j?.data) {
+            user = j.data;
+            $("name").value = user.real_name || "";
+            $("no").value = user.student_no || "";
+            $("college").value = user.college || "";
+            $("major").value = user.major || "";
+            $("grade").value = user.grade || "";
+            $("dorm").value =
+              user.building_no && user.room_no
+                ? `${user.building_no}号楼 ${user.room_no}`
+                : "";
+          } else {
+            alert("获取资料失败，请重新登录");
+            localStorage.clear();
+            location.replace(ORIGIN + "/login/");
+          }
+        } catch (e) {
+          alert("服务器异常");
+        }
+      }
+
+      function setEditable(edit) {
+        ["name", "college", "major", "grade"].forEach((id) => {
+          const el = $(id);
+          if (edit) {
+            el.removeAttribute("readonly");
+            el.classList.remove("readonly");
+          } else {
+            el.setAttribute("readonly", "true");
+            el.classList.add("readonly");
+          }
+        });
+        $("edit").style.display = edit ? "none" : "block";
+        $("save").style.display = edit ? "block" : "none";
+      }
+
+      $("edit").onclick = () => setEditable(true);
+
+      $("save").onclick = async () => {
+        const payload = {
+          real_name: $("name").value.trim(),
+          college: $("college").value.trim(),
+          major: $("major").value.trim(),
+          grade: $("grade").value.trim(),
+        };
+        try {
+          const res = await fetch(API + "/update", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+            body: JSON.stringify(payload),
+          });
+          const j = await res.json();
+          if (res.ok) {
+            alert("信息已更新");
+            setEditable(false);
+          } else {
+            alert(j.msg || "更新失败");
+          }
+        } catch (e) {
+          alert("服务器异常");
+        }
+      };
+
+      loadProfile();
+    </script>
+  </body>
+</html>

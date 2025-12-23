@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>人脸识别 - 福州大学校园管理系统</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary: #1a6bc4;
+        --secondary: #0d4e8c;
+        --ok: #0abf53;
+        --bad: #e74c3c;
+        --bg: #f0f2f5;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+        background: var(--bg);
+        color: #222;
+      }
+      .layout {
+        display: flex;
+        min-height: 100vh;
+      }
+      .sidebar {
+        width: 250px;
+        background: linear-gradient(
+          to bottom,
+          var(--secondary),
+          var(--primary)
+        );
+        color: #fff;
+      }
+      .side-hd {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 18px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      .nav a {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 12px 16px;
+        color: rgba(255, 255, 255, 0.85);
+        text-decoration: none;
+      }
+      .nav a:hover,
+      .nav a.active {
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+      }
+      .main {
+        flex: 1;
+        padding: 24px;
+      }
+      .title {
+        font-size: 22px;
+        margin: 0 0 16px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .card {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        padding: 16px;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+      .btn {
+        border: none;
+        background: var(--primary);
+        color: #fff;
+        padding: 8px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .btn.secondary {
+        background: #0d4e8c;
+      }
+      .btn.gray {
+        background: #6b778c;
+      }
+      .btn.danger {
+        background: #e74c3c;
+      }
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .status {
+        margin-top: 8px;
+        font-size: 14px;
+      }
+      .ok {
+        color: var(--ok);
+      }
+      .bad {
+        color: var(--bad);
+      }
+      video,
+      canvas,
+      .preview {
+        width: 100%;
+        max-width: 520px;
+        background: #000;
+        border-radius: 8px;
+      }
+      .preview {
+        background: #111;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #aaa;
+        height: 300px;
+      }
+      .thumbs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+      .thumb {
+        position: relative;
+        width: 110px;
+        height: 110px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .thumb .rm {
+        position: absolute;
+        right: 4px;
+        top: 4px;
+        background: rgba(0, 0, 0, 0.55);
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 2px 6px;
+        cursor: pointer;
+      }
+      .hint {
+        font-size: 12px;
+        color: #666;
+      }
+      .split {
+        height: 1px;
+        background: #eee;
+        margin: 16px 0;
+      }
+      .cnt {
+        font-weight: 700;
+      }
+      .modal-mask {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+      }
+      .modal {
+        background: #fff;
+        border-radius: 12px;
+        min-width: 320px;
+        max-width: 92vw;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        padding: 16px;
+      }
+      .modal h3 {
+        margin: 0 0 10px;
+      }
+      .modal .fg {
+        margin: 10px 0;
+      }
+      .modal label {
+        display: block;
+        margin-bottom: 6px;
+      }
+      .modal input {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+      }
+      @media (max-width: 992px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <div class="sidebar">
+        <div class="side-hd">
+          <i class="fas fa-graduation-cap"></i><b>福州大学校园管理系统</b>
+        </div>
+        <div class="nav">
+          <a href="/dashboard/"
+            ><i class="fas fa-home"></i><span>系统概览</span></a
+          >
+          <a href="/face/" class="active"
+            ><i class="fas fa-user-check"></i><span>人脸识别</span></a
+          >
+          <a href="/profile/"
+            ><i class="fas fa-id-card"></i><span>学生资料卡</span></a
+          >
+        </div>
+      </div>
+
+      <div class="main">
+        <h1 class="title">人脸识别</h1>
+
+        <div class="grid">
+          <!-- 左：验证 -->
+          <div class="card">
+            <h3>① 验证（摄像头 / 本地图片）</h3>
+            <div class="hint">
+              拍照或上传图片，发送到
+              <code>/api/face/verify</code>，与现有向量库匹配
+            </div>
+            <div style="margin: 10px 0">
+              <video
+                id="camV"
+                autoplay
+                playsinline
+                muted
+                style="display: none"
+              ></video>
+              <canvas id="snapV" style="display: none"></canvas>
+              <div id="previewV" class="preview">未开启摄像头</div>
+            </div>
+            <div class="row">
+              <button id="openCamV" class="btn">开启摄像头</button>
+              <button id="shotV" class="btn secondary" disabled>
+                拍照并验证
+              </button>
+              <button id="closeCamV" class="btn gray" disabled>
+                关闭摄像头
+              </button>
+              <input type="file" id="fileV" accept="image/*" />
+              <button id="uploadV" class="btn">上传并验证</button>
+            </div>
+            <div id="msgV" class="status"></div>
+          </div>
+
+          <!-- 右：入库 -->
+          <div class="card">
+            <h3>
+              ② 入库（摄像头 / 本地图片，最少 <span class="cnt">7</span> 张）
+            </h3>
+            <div class="hint">
+              最终会绑定到你当前账号；提交前需再次输入账号/密码确认
+            </div>
+            <div class="split"></div>
+
+            <div class="hint">A. 摄像头连拍 → 加入“待入库篮子”</div>
+            <div style="margin: 10px 0">
+              <video
+                id="camE"
+                autoplay
+                playsinline
+                muted
+                style="display: none"
+              ></video>
+              <canvas id="snapE" style="display: none"></canvas>
+              <div id="previewE" class="preview">未开启摄像头</div>
+            </div>
+            <div class="row">
+              <button id="openCamE" class="btn">开启摄像头</button>
+              <button id="shotE" class="btn secondary" disabled>
+                拍一张加入篮子
+              </button>
+              <button id="closeCamE" class="btn gray" disabled>
+                关闭摄像头
+              </button>
+            </div>
+
+            <div class="split"></div>
+            <div class="hint">B. 选择多张文件加入篮子</div>
+            <div class="row">
+              <input type="file" id="filesE" accept="image/*" multiple />
+              <button id="addFilesE" class="btn">加入篮子</button>
+              <button id="clearE" class="btn danger">清空篮子</button>
+              <span>当前已选：<span id="countE" class="cnt">0</span> 张</span>
+            </div>
+
+            <div class="thumbs" id="thumbsE"></div>
+
+            <div class="split"></div>
+            <div class="row">
+              <button id="submitE" class="btn" disabled>
+                确认入库（会弹出二次验证）
+              </button>
+            </div>
+            <div id="msgE" class="status"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 简单模态框：二次验证（账号/密码） -->
+    <div id="modalMask" class="modal-mask">
+      <div class="modal">
+        <h3>二次确认</h3>
+        <div class="fg">
+          <label>账号（只读）</label>
+          <input id="accName" type="text" readonly />
+        </div>
+        <div class="fg">
+          <label>密码</label>
+          <input id="accPwd" type="password" placeholder="请输入登录密码" />
+        </div>
+        <div class="row" style="justify-content: flex-end">
+          <button id="mCancel" class="btn gray">取消</button>
+          <button id="mOK" class="btn">确认提交</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const ORIGIN = location.origin;
+      const FACE = `${ORIGIN}/api/face`;
+      const AUTH = `${ORIGIN}/api/auth`;
+
+      // 登录守卫
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("请先登录！");
+        location.replace(`${ORIGIN}/login/`);
+      }
+
+      // 动态获取最新 token，避免切账号仍用旧 JWT
+      function authHeaders() {
+        const t = localStorage.getItem("token") || "";
+        return { Authorization: `Bearer ${t}` };
+      }
+
+      // 拿当前账号信息（用于模态框显示 & 作为 label 的来源提示）
+      let profile = {};
+      (async () => {
+        try {
+          const r = await fetch(`${AUTH}/profile`, { headers: authHeaders() });
+          const j = await r.json();
+          if (r.ok && j?.data) profile = j.data;
+        } catch {}
+      })();
+
+      /* ---------- 通用相机封装 ---------- */
+      async function openCam(videoEl, previewEl, closeBtn) {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false,
+        });
+        videoEl.srcObject = stream;
+        videoEl.style.display = "block";
+        previewEl.style.display = "none";
+        if (videoEl.readyState < 2) {
+          await new Promise((r) =>
+            videoEl.addEventListener("loadedmetadata", r, { once: true })
+          );
+        }
+        closeBtn.disabled = false;
+        return stream;
+      }
+      function closeCam(stream, videoEl, previewEl, msgEl) {
+        if (stream) stream.getTracks().forEach((t) => t.stop());
+        videoEl.style.display = "none";
+        previewEl.style.display = "flex";
+        previewEl.textContent = "未开启摄像头";
+        if (msgEl) msgEl.textContent = "";
+      }
+      async function shotBlob(videoEl, canvasEl) {
+        const w = videoEl.videoWidth,
+          h = videoEl.videoHeight;
+        if (!w || !h) throw new Error("摄像头未就绪");
+        canvasEl.width = w;
+        canvasEl.height = h;
+        const ctx = canvasEl.getContext("2d");
+        ctx.drawImage(videoEl, 0, 0, w, h);
+        return await new Promise((res) =>
+          canvasEl.toBlob(res, "image/jpeg", 0.92)
+        );
+      }
+
+      /* ---------- ① 验证 ---------- */
+      const v = {
+        video: document.getElementById("camV"),
+        canvas: document.getElementById("snapV"),
+        preview: document.getElementById("previewV"),
+        open: document.getElementById("openCamV"),
+        shot: document.getElementById("shotV"),
+        close: document.getElementById("closeCamV"),
+        file: document.getElementById("fileV"),
+        upload: document.getElementById("uploadV"),
+        msg: document.getElementById("msgV"),
+        stream: null,
+      };
+
+      v.open.onclick = async () => {
+        try {
+          if (v.stream) return (v.msg.textContent = "摄像头已开启");
+          v.stream = await openCam(v.video, v.preview, v.close);
+          v.shot.disabled = false;
+        } catch (e) {
+          v.msg.textContent = "开启失败：" + e.message;
+          v.msg.className = "status bad";
+        }
+      };
+      v.close.onclick = () => {
+        closeCam(v.stream, v.video, v.preview, v.msg);
+        v.stream = null;
+        v.shot.disabled = true;
+        v.close.disabled = true;
+      };
+      v.shot.onclick = async () => {
+        try {
+          const blob = await shotBlob(v.video, v.canvas);
+          // 预览
+          v.preview.style.display = "block";
+          v.video.style.display = "none";
+          v.preview.innerHTML = "";
+          const url = URL.createObjectURL(blob);
+          const img = new Image();
+          img.src = url;
+          img.style.maxWidth = "100%";
+          img.style.borderRadius = "8px";
+          v.preview.appendChild(img);
+
+          const fd = new FormData();
+          fd.append("file", blob, "capture.jpg");
+          const r = await fetch(`${FACE}/verify`, {
+            method: "POST",
+            headers: authHeaders(),
+            body: fd,
+          });
+          const j = await r.json();
+          if (r.ok && j.ok) {
+            v.msg.textContent = `识别成功：${j.label}（${(
+              j.score * 100
+            ).toFixed(1)}%）`;
+            v.msg.className = "status ok";
+          } else {
+            v.msg.textContent = `识别失败：${j?.msg || "verify failed"}`;
+            v.msg.className = "status bad";
+          }
+        } catch (e) {
+          v.msg.textContent = "识别异常：" + e.message;
+          v.msg.className = "status bad";
+        }
+      };
+      v.upload.onclick = async () => {
+        if (!v.file.files.length) {
+          v.msg.textContent = "请选择图片";
+          v.msg.className = "status";
+          return;
+        }
+        const fd = new FormData();
+        fd.append("file", v.file.files[0]);
+        const r = await fetch(`${FACE}/verify`, {
+          method: "POST",
+          headers: authHeaders(),
+          body: fd,
+        });
+        const j = await r.json();
+        if (r.ok && j.ok) {
+          v.msg.textContent = `识别成功：${j.label}（${(j.score * 100).toFixed(
+            1
+          )}%）`;
+          v.msg.className = "status ok";
+        } else {
+          v.msg.textContent = `识别失败：${j?.msg || "verify failed"}`;
+          v.msg.className = "status bad";
+        }
+      };
+
+      /* ---------- ② 入库（带确认） ---------- */
+      const e2 = {
+        video: document.getElementById("camE"),
+        canvas: document.getElementById("snapE"),
+        preview: document.getElementById("previewE"),
+        open: document.getElementById("openCamE"),
+        shot: document.getElementById("shotE"),
+        close: document.getElementById("closeCamE"),
+        files: document.getElementById("filesE"),
+        addFiles: document.getElementById("addFilesE"),
+        clear: document.getElementById("clearE"),
+        thumbs: document.getElementById("thumbsE"),
+        count: document.getElementById("countE"),
+        submit: document.getElementById("submitE"),
+        msg: document.getElementById("msgE"),
+        stream: null,
+        basket: [], // { blob, name, src } 列表
+        source: new Set(), // 统计来源(camera / upload)
+      };
+
+      function refreshThumbs() {
+        e2.thumbs.innerHTML = "";
+        e2.basket.forEach((it, idx) => {
+          const div = document.createElement("div");
+          div.className = "thumb";
+          const img = new Image();
+          img.src = it.src;
+          div.appendChild(img);
+          const rm = document.createElement("button");
+          rm.className = "rm";
+          rm.textContent = "×";
+          rm.onclick = () => {
+            URL.revokeObjectURL(it.src);
+            e2.basket.splice(idx, 1);
+            refreshThumbs();
+          };
+          div.appendChild(rm);
+          e2.thumbs.appendChild(div);
+        });
+        e2.count.textContent = String(e2.basket.length);
+        e2.submit.disabled = e2.basket.length < 7;
+      }
+
+      e2.open.onclick = async () => {
+        try {
+          if (e2.stream) return (e2.msg.textContent = "摄像头已开启");
+          e2.stream = await openCam(e2.video, e2.preview, e2.close);
+          e2.shot.disabled = false;
+        } catch (err) {
+          e2.msg.textContent = "开启失败：" + err.message;
+          e2.msg.className = "status bad";
+        }
+      };
+      e2.close.onclick = () => {
+        closeCam(e2.stream, e2.video, e2.preview, e2.msg);
+        e2.stream = null;
+        e2.shot.disabled = true;
+        e2.close.disabled = true;
+      };
+      e2.shot.onclick = async () => {
+        try {
+          const blob = await shotBlob(e2.video, e2.canvas);
+          const url = URL.createObjectURL(blob);
+          e2.basket.push({ blob, name: `cam_${Date.now()}.jpg`, src: url });
+          e2.source.add("camera");
+          // 预览不切换，保持取景；仅提示并刷新缩略图
+          e2.msg.textContent = `已加入 1 张（当前 ${e2.basket.length} 张）`;
+          e2.msg.className = "status";
+          refreshThumbs();
+        } catch (err) {
+          e2.msg.textContent = "拍照失败：" + err.message;
+          e2.msg.className = "status bad";
+        }
+      };
+
+      e2.addFiles.onclick = () => {
+        const fs = e2.files.files;
+        if (!fs.length) {
+          e2.msg.textContent = "请选择文件";
+          e2.msg.className = "status";
+          return;
+        }
+        for (const f of fs) {
+          const url = URL.createObjectURL(f);
+          e2.basket.push({
+            blob: f,
+            name: f.name || `file_${Date.now()}.jpg`,
+            src: url,
+          });
+        }
+        e2.source.add("upload");
+        e2.msg.textContent = `已加入 ${fs.length} 张（当前 ${e2.basket.length} 张）`;
+        e2.msg.className = "status";
+        e2.files.value = "";
+        refreshThumbs();
+      };
+
+      e2.clear.onclick = () => {
+        e2.basket.forEach((it) => URL.revokeObjectURL(it.src));
+        e2.basket = [];
+        e2.source.clear();
+        refreshThumbs();
+      };
+
+      // 模态框
+      const modalMask = document.getElementById("modalMask");
+      const accName = document.getElementById("accName");
+      const accPwd = document.getElementById("accPwd");
+      const mCancel = document.getElementById("mCancel");
+      const mOK = document.getElementById("mOK");
+
+      e2.submit.onclick = () => {
+        if (e2.basket.length < 7) return;
+        const acc =
+          profile?.student_id ||
+          profile?.student_no ||
+          profile?.username ||
+          `uid_${profile?.id || ""}`;
+        accName.value = acc;
+        accPwd.value = "";
+        modalMask.style.display = "flex";
+      };
+      mCancel.onclick = () => {
+        modalMask.style.display = "none";
+      };
+      mOK.onclick = async () => {
+        const pwd = accPwd.value.trim();
+        if (!pwd) return alert("请输入密码");
+        modalMask.style.display = "none";
+
+        // 构造来源标记
+        let src = "upload";
+        if (e2.source.has("camera") && e2.source.has("upload")) src = "mixed";
+        else if (e2.source.has("camera")) src = "camera";
+
+        // 组装表单并提交到 enroll-secure
+        const fd = new FormData();
+        fd.append("password", pwd);
+        for (const it of e2.basket) fd.append("files", it.blob, it.name);
+
+        e2.msg.textContent = "入库中...";
+        try {
+          const r = await fetch(`${FACE}/enroll-secure`, {
+            method: "POST",
+            headers: { ...authHeaders(), "x-source": src },
+            body: fd,
+          });
+          const j = await r.json();
+          if (r.ok && j.ok) {
+            e2.msg.textContent = `入库成功！已新增 ${j.added} 张；当前库：${
+              j.db_size ?? "-"
+            }（阈值 ${j.threshold}）`;
+            e2.msg.className = "status ok";
+            // 清空篮子
+            e2.clear.click();
+          } else {
+            e2.msg.textContent = `入库失败：${j?.msg || "enroll failed"}`;
+            e2.msg.className = "status bad";
+          }
+        } catch (err) {
+          e2.msg.textContent = "请求失败：" + err.message;
+          e2.msg.className = "status bad";
+        }
+      };
+    </script>
+  </body>
+</html>
